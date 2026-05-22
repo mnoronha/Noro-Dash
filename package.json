@@ -7,7 +7,7 @@
     "node": "20.x"
   },
   "scripts": {
-    "build": "turbo build",
+    "build": "npm run build --prefix apps/web",
     "dev": "turbo dev",
     "lint": "turbo lint",
     "test": "turbo test",
