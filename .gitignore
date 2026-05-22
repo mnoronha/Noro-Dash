@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+.corepack/
+.git-codex/
+
+# Builds
+.next/
+dist/
+build/
+coverage/
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Supabase local
+.branches/
+.temp/
