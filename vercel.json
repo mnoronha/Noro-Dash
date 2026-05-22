@@ -1,0 +1,5 @@
+{
+  "installCommand": "pnpm install",
+  "buildCommand": "pnpm --filter @noro-dash/web build",
+  "outputDirectory": "apps/web/.next"
+}
