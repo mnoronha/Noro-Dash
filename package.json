@@ -2,21 +2,37 @@
   "name": "noro-dash",
   "private": true,
   "version": "0.1.0",
-  "packageManager": "pnpm@10.12.1",
+  "packageManager": "npm@10.8.2",
   "engines": {
     "node": "20.x"
   },
   "scripts": {
-    "build": "npm run build --prefix apps/web",
-    "dev": "turbo dev",
-    "lint": "turbo lint",
-    "test": "turbo test",
-    "typecheck": "turbo typecheck",
+    "build": "next build",
+    "dev": "next dev",
+    "lint": "next lint",
+    "test": "echo \"No tests configured yet\"",
+    "typecheck": "tsc --noEmit",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,sql}\""
   },
+  "dependencies": {
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.46.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.468.0",
+    "next": "14.2.16",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
   "devDependencies": {
+    "@types/node": "^22.9.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "14.2.16",
+    "postcss": "^8.4.49",
     "prettier": "^3.3.3",
-    "turbo": "^2.3.3",
+    "tailwindcss": "^3.4.15",
     "typescript": "^5.6.3"
   }
 }
