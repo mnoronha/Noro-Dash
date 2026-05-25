@@ -6,23 +6,22 @@ Plataforma SaaS white-label para gestao, analise e automacao de trafego pago par
 
 Centralizar dados de midia, analytics, e-commerce, metas, orcamentos, alertas e insights de IA em uma experiencia unica para agencias e clientes.
 
-## Estrutura inicial
+## Estrutura atual
+
+App unico Next.js (App Router) na raiz. O monorepo com `apps/api` (NestJS) e
+`packages/*` descrito no PRD/ROADMAP e evolucao futura — ainda nao existe no codigo.
 
 ```text
 noro-dash/
-+-- apps/
-|   +-- web/
-|   +-- api/
-|   +-- workers/
-+-- packages/
-|   +-- ai/
-|   +-- database/
-|   +-- integrations/
-|   +-- shared/
-|   +-- ui/
-+-- docs/
++-- src/
+|   +-- app/            # rotas (App Router): /, /login, /dashboard
+|   +-- components/     # componentes (auth, ...)
+|   +-- lib/            # env, clients Supabase (browser/server)
+|   +-- middleware.ts   # protecao de rotas via Supabase Auth
 +-- supabase/
-|   +-- tests/
+|   +-- migrations/     # schema + bootstrap super_admin
+|   +-- tests/          # isolamento multi-tenant
++-- docs/
 +-- PRD.md
 +-- ROADMAP.md
 ```
