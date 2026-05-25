@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { hasSupabaseEnv } from "@/lib/env";
 
 type CookieToSet = {
   name: string;
@@ -11,6 +12,12 @@ export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
     request,
   });
+
+  // Sem credenciais Supabase: nao da pra checar sessao. Deixa passar para o
+  // app continuar acessivel (tela de login/setup) em vez de dar 500.
+  if (!hasSupabaseEnv()) {
+    return response;
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

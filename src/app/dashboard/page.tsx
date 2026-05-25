@@ -10,6 +10,7 @@ import {
   WalletCards,
 } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { hasSupabaseEnv } from "@/lib/env";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 
 type Profile = {
@@ -37,6 +38,26 @@ const setupItems = [
 ];
 
 export default async function DashboardPage() {
+  if (!hasSupabaseEnv()) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-mist px-6">
+        <div className="max-w-md rounded-lg bg-white p-8 text-center shadow-panel">
+          <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-lg bg-ink text-lg font-bold text-white">
+            N
+          </div>
+          <h1 className="text-xl font-semibold text-ink">Configuracao pendente</h1>
+          <p className="mt-3 text-sm leading-6 text-slate-500">
+            O deploy esta no ar, mas as variaveis do Supabase
+            (<code>NEXT_PUBLIC_SUPABASE_URL</code> e{" "}
+            <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code>) ainda nao foram definidas.
+            Configure-as no projeto da Vercel e refaca o deploy para habilitar
+            login e dashboard.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
   const supabase = createSupabaseServerClient();
   const {
     data: { user },

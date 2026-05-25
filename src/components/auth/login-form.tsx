@@ -4,11 +4,12 @@ import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Loader2, LogIn } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { hasSupabaseEnv } from "@/lib/env";
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const supabase = createSupabaseBrowserClient();
+  const envReady = hasSupabaseEnv();
   const [email, setEmail] = useState("noroiaoficial@gmail.com");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -20,6 +21,13 @@ export function LoginForm() {
     setLoading(true);
     setError(null);
 
+    if (!envReady) {
+      setLoading(false);
+      setError("Configuracao pendente: as variaveis do Supabase ainda nao foram definidas no deploy.");
+      return;
+    }
+
+    const supabase = createSupabaseBrowserClient();
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -45,6 +53,14 @@ export function LoginForm() {
           Use o usuario criado no Supabase Auth para acessar a area administrativa.
         </p>
       </div>
+
+      {!envReady ? (
+        <div className="mb-6 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Configuracao pendente: as variaveis do Supabase ainda nao foram
+          definidas neste deploy. O login sera habilitado apos configura-las na
+          Vercel.
+        </div>
+      ) : null}
 
       <form className="space-y-5" onSubmit={handleSubmit}>
         <label className="block">
@@ -90,7 +106,7 @@ export function LoginForm() {
         <button
           className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-ink px-4 font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
           type="submit"
-          disabled={loading}
+          disabled={loading || !envReady}
         >
           {loading ? <Loader2 className="animate-spin" size={18} /> : <LogIn size={18} />}
           Entrar
