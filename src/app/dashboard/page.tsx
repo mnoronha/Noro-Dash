@@ -1,12 +1,13 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import {
-  Activity,
   AlertTriangle,
-  BarChart3,
+  ArrowRight,
   Building2,
   CheckCircle2,
   Gauge,
   Goal,
+  Plus,
   WalletCards,
 } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -22,12 +23,13 @@ type Profile = {
   } | null;
 };
 
-const metrics = [
-  { label: "Clientes ativos", value: "0", icon: Building2, tone: "text-sea" },
-  { label: "Investimento MTD", value: "R$ 0", icon: WalletCards, tone: "text-coral" },
-  { label: "Alertas abertos", value: "0", icon: AlertTriangle, tone: "text-amber-500" },
-  { label: "Health medio", value: "--", icon: Gauge, tone: "text-emerald-500" },
-];
+type Account = {
+  id: string;
+  name: string;
+  slug: string;
+  website_url: string | null;
+  status: string;
+};
 
 const setupItems = [
   "Conectar primeiro cliente",
@@ -72,6 +74,21 @@ export default async function DashboardPage() {
     .select("full_name, role, agencies(name, slug)")
     .eq("id", user.id)
     .single<Profile>();
+
+  const { data: accounts } = await supabase
+    .from("accounts")
+    .select("id, name, slug, website_url, status")
+    .order("created_at", { ascending: false })
+    .returns<Account[]>();
+
+  const clients = accounts ?? [];
+
+  const metrics = [
+    { label: "Clientes ativos", value: String(clients.length), icon: Building2, tone: "text-sea" },
+    { label: "Investimento MTD", value: "R$ 0", icon: WalletCards, tone: "text-coral" },
+    { label: "Alertas abertos", value: "0", icon: AlertTriangle, tone: "text-amber-500" },
+    { label: "Health medio", value: "--", icon: Gauge, tone: "text-emerald-500" },
+  ];
 
   return (
     <main className="min-h-screen bg-mist">
@@ -141,21 +158,71 @@ export default async function DashboardPage() {
                 <p className="text-sm font-medium text-slate-500">Visao Agencia</p>
                 <h3 className="mt-1 text-xl font-semibold text-ink">Clientes</h3>
               </div>
-              <BarChart3 className="text-sea" size={22} />
+              <Link
+                href="/dashboard/clientes"
+                className="inline-flex items-center gap-1 rounded-md bg-ink px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+              >
+                <Plus size={16} />
+                Adicionar cliente
+              </Link>
             </div>
 
-            <div className="flex min-h-64 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 px-6 text-center">
-              <div className="max-w-md">
-                <Activity className="mx-auto mb-4 text-slate-400" size={34} />
-                <h4 className="text-lg font-semibold text-ink">
-                  Nenhum cliente cadastrado ainda
-                </h4>
-                <p className="mt-2 text-sm leading-6 text-slate-500">
-                  A proxima etapa e criar o primeiro account da agencia e preparar o
-                  fluxo de conexao Meta Ads + GA4.
-                </p>
+            {clients.length === 0 ? (
+              <div className="flex min-h-64 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 px-6 text-center">
+                <div className="max-w-md">
+                  <Building2 className="mx-auto mb-4 text-slate-400" size={34} />
+                  <h4 className="text-lg font-semibold text-ink">
+                    Nenhum cliente cadastrado ainda
+                  </h4>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    Cadastre o primeiro cliente da agencia para comecar a conectar
+                    Meta Ads + GA4.
+                  </p>
+                  <Link
+                    href="/dashboard/clientes"
+                    className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-sea hover:underline"
+                  >
+                    Cadastrar primeiro cliente
+                    <ArrowRight size={14} />
+                  </Link>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div>
+                <ul className="divide-y divide-slate-100">
+                  {clients.slice(0, 5).map((client) => (
+                    <li
+                      key={client.id}
+                      className="flex items-center justify-between gap-4 py-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-md bg-teal-50 text-sea">
+                          <Building2 size={16} />
+                        </div>
+                        <div>
+                          <p className="font-medium text-ink">{client.name}</p>
+                          {client.website_url ? (
+                            <span className="text-sm text-slate-400">
+                              {client.website_url}
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+                      <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-600">
+                        {client.status}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href="/dashboard/clientes"
+                  className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-sea hover:underline"
+                >
+                  Ver todos os clientes
+                  <ArrowRight size={14} />
+                </Link>
+              </div>
+            )}
           </div>
 
           <aside className="rounded-lg bg-white p-6 shadow-panel">
