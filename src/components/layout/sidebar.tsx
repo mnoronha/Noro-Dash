@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
+  Settings,
   LogOut,
 } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
@@ -13,6 +14,7 @@ import { useRouter } from "next/navigation";
 const nav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/dashboard/clientes", label: "Clientes", icon: Users, exact: false },
+  { href: "/dashboard/configuracoes", label: "Configurações", icon: Settings, exact: false },
 ];
 
 type Props = {

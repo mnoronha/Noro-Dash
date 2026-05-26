@@ -1,9 +1,6 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import {
   AlertTriangle,
-  ArrowLeft,
-  Building2,
   CheckCircle2,
   DollarSign,
   ExternalLink,
@@ -121,7 +118,7 @@ export default async function ClienteDetailPage({
         .returns<Alert[]>(),
     ]);
 
-  const metrics = (metricRows ?? []).reduce(
+  const metrics = (metricRows ?? []).reduce<{ spend: number; revenue: number; leads: number }>(
     (acc, r) => ({
       spend: acc.spend + (Number(r.spend) || 0),
       revenue: acc.revenue + (Number(r.revenue) || 0),
@@ -143,45 +140,24 @@ export default async function ClienteDetailPage({
   const semDados = metrics.spend === 0 && metrics.revenue === 0;
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-8 space-y-6">
-      {/* Breadcrumb + header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard/clientes"
-            className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-ink"
+    <div className="space-y-6">
+      {/* Website link */}
+      {account.website_url && (
+        <div className="flex items-center justify-between">
+          <a
+            href={account.website_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-sea"
           >
-            <ArrowLeft size={16} />
-          </Link>
-          <div>
-            <p className="text-xs text-slate-400">
-              <Link href="/dashboard" className="hover:text-ink">Dashboard</Link>
-              {" / "}
-              <Link href="/dashboard/clientes" className="hover:text-ink">Clientes</Link>
-            </p>
-            <div className="flex items-center gap-2 mt-0.5">
-              <h1 className="text-xl font-semibold text-ink">{account.name}</h1>
-              <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-600">
-                {account.status}
-              </span>
-            </div>
-            {account.website_url && (
-              <a
-                href={account.website_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-sea"
-              >
-                {account.website_url}
-                <ExternalLink size={11} />
-              </a>
-            )}
-          </div>
+            {account.website_url}
+            <ExternalLink size={11} />
+          </a>
+          <p className="text-xs text-slate-400">
+            Cliente desde {fmtDate(account.created_at)}
+          </p>
         </div>
-        <p className="text-xs text-slate-400 shrink-0">
-          Cliente desde {fmtDate(account.created_at)}
-        </p>
-      </div>
+      )}
 
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -250,7 +226,6 @@ export default async function ClienteDetailPage({
             </ul>
           )}
 
-          {/* Conectar placeholder */}
           <div className="mt-4 rounded-md border border-dashed border-slate-200 bg-slate-50 p-4">
             <p className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-400">
               Disponíveis para conectar
