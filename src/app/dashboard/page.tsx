@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { hasSupabaseEnv } from "@/lib/env";
-import { SignOutButton } from "@/components/auth/sign-out-button";
 
 type Profile = {
   full_name: string | null;
@@ -168,36 +167,7 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <main className="min-h-screen bg-mist">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-ink text-base font-bold text-white">
-              N
-            </div>
-            <div>
-              <p className="text-sm font-medium text-slate-500">Noro Dash</p>
-              <h1 className="text-lg font-semibold text-ink">
-                {profile?.agencies?.name ?? "Agencia"}
-              </h1>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="hidden text-right sm:block">
-              <p className="text-sm font-medium text-ink">
-                {profile?.full_name ?? user.email}
-              </p>
-              <p className="text-xs uppercase tracking-wide text-slate-500">
-                {profile?.role ?? "usuario"}
-              </p>
-            </div>
-            <SignOutButton />
-          </div>
-        </div>
-      </header>
-
-      <div className="mx-auto max-w-7xl px-6 py-8">
+    <div className="mx-auto max-w-7xl px-6 py-8">
         {/* Indicadores globais da agencia */}
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {globals.map((g) => (
@@ -259,9 +229,10 @@ export default async function DashboardPage() {
                 const semDados = m.spend === 0 && m.revenue === 0 && integrations === 0;
 
                 return (
-                  <div
+                  <Link
                     key={client.id}
-                    className="rounded-lg bg-white p-5 shadow-panel"
+                    href={`/dashboard/clientes/${client.slug}`}
+                    className="block rounded-lg bg-white p-5 shadow-panel transition hover:shadow-md hover:-translate-y-0.5"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
@@ -316,13 +287,13 @@ export default async function DashboardPage() {
                         Sem dados de midia ainda — conecte uma integracao.
                       </p>
                     ) : null}
-                  </div>
+                  </Link>
                 );
               })}
             </div>
           )}
         </section>
       </div>
-    </main>
+    </div>
   );
 }
