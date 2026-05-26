@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
 type StateData = { account_id: string; account_slug: string };
 type Account = { id: string; agency_id: string };
@@ -28,12 +29,16 @@ export async function GET(request: NextRequest) {
   }
 
   const { account_id, account_slug } = stateData;
-  const supabase = createSupabaseServerClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  // Valida sessão do usuário
+  const userClient = createSupabaseServerClient();
+  const { data: { user } } = await userClient.auth.getUser();
   if (!user) return NextResponse.redirect(new URL("/login", origin));
 
-  const { data: account } = await supabase
+  // Operações de DB via service client (sem RLS)
+  const db = createSupabaseServiceClient();
+
+  const { data: account } = await db
     .from("accounts")
     .select("id, agency_id")
     .eq("id", account_id)
@@ -41,7 +46,7 @@ export async function GET(request: NextRequest) {
 
   if (!account) return NextResponse.redirect(new URL("/dashboard/clientes", origin));
 
-  const { data: agency } = await supabase
+  const { data: agency } = await db
     .from("agencies")
     .select("meta_app_id, meta_app_secret")
     .eq("id", account.agency_id)
@@ -63,7 +68,7 @@ export async function GET(request: NextRequest) {
     `&client_secret=${agency.meta_app_secret}` +
     `&code=${code}`
   );
-  const tokenData = await tokenRes.json();
+  const tokenData: { access_token?: string } = await tokenRes.json();
 
   if (!tokenData.access_token) {
     console.error("Meta token error:", tokenData);
@@ -80,18 +85,18 @@ export async function GET(request: NextRequest) {
     `&client_secret=${agency.meta_app_secret}` +
     `&fb_exchange_token=${tokenData.access_token}`
   );
-  const longData = await longRes.json();
-  const accessToken: string = longData.access_token ?? tokenData.access_token;
-  const expiresIn: number = longData.expires_in ?? 5_184_000; // 60 dias padrão
+  const longData: { access_token?: string; expires_in?: number } = await longRes.json();
+  const accessToken = longData.access_token ?? tokenData.access_token;
+  const expiresIn = longData.expires_in ?? 5_184_000;
 
-  // Busca contas de anúncio vinculadas ao usuário
+  // Busca contas de anúncio
   const adAccountsRes = await fetch(
     `https://graph.facebook.com/v20.0/me/adaccounts?` +
     `fields=id,name,account_id,currency,account_status` +
     `&access_token=${accessToken}`
   );
-  const adAccountsData = await adAccountsRes.json();
-  const adAccounts: AdAccount[] = adAccountsData.data ?? [];
+  const adAccountsData: { data?: AdAccount[] } = await adAccountsRes.json();
+  const adAccounts = adAccountsData.data ?? [];
 
   if (adAccounts.length === 0) {
     return NextResponse.redirect(
@@ -103,27 +108,29 @@ export async function GET(request: NextRequest) {
   const autoSelect = adAccounts.length === 1;
 
   const integrationPayload = {
+    agency_id: account.agency_id,
     account_id,
     provider: "meta_ads",
     status: autoSelect ? "active" : "pending_selection",
     access_token: accessToken,
     token_expires_at: tokenExpiresAt,
     external_account_id: autoSelect ? adAccounts[0].id : null,
+    external_account_name: autoSelect ? adAccounts[0].name : null,
     meta_data: { ad_accounts: adAccounts },
-    last_sync_at: null,
+    last_success_at: null,
   };
 
-  const { data: existing } = await supabase
+  const { data: existing } = await db
     .from("integrations")
     .select("id")
     .eq("account_id", account_id)
     .eq("provider", "meta_ads")
-    .single<ExistingIntegration>();
+    .maybeSingle<ExistingIntegration>();
 
   if (existing) {
-    await supabase.from("integrations").update(integrationPayload).eq("id", existing.id);
+    await db.from("integrations").update(integrationPayload).eq("id", existing.id);
   } else {
-    await supabase.from("integrations").insert(integrationPayload);
+    await db.from("integrations").insert(integrationPayload);
   }
 
   if (autoSelect) {
@@ -132,7 +139,6 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Múltiplas contas → página de seleção
   return NextResponse.redirect(
     new URL(`/dashboard/clientes/${account_slug}/integracoes/meta`, origin)
   );

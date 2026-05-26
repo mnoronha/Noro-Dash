@@ -12,6 +12,7 @@ import {
   Clock,
 } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { SyncButton } from "@/components/clients/sync-button";
 
 type Account = {
   id: string;
@@ -26,7 +27,7 @@ type Integration = {
   id: string;
   provider: string;
   status: string;
-  last_sync_at: string | null;
+  last_success_at: string | null;
   created_at: string;
 };
 
@@ -107,7 +108,7 @@ export default async function ClienteDetailPage({
         .returns<MetricRow[]>(),
       supabase
         .from("integrations")
-        .select("id, provider, status, last_sync_at, created_at")
+        .select("id, provider, status, last_success_at, created_at")
         .eq("account_id", account.id)
         .returns<Integration[]>(),
       supabase
@@ -209,9 +210,14 @@ export default async function ClienteDetailPage({
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         {/* Integrações */}
         <section className="rounded-lg bg-white p-6 shadow-panel">
-          <div className="mb-5 flex items-center justify-between">
+          <div className="mb-5 flex items-center justify-between gap-4">
             <h2 className="text-lg font-semibold text-ink">Integrações</h2>
-            <Plug size={16} className="text-slate-400" />
+            <div className="flex items-center gap-3">
+              {integrations.some((i) => i.status === "active") && (
+                <SyncButton accountId={account.id} />
+              )}
+              <Plug size={16} className="text-slate-400" />
+            </div>
           </div>
 
           {integrations.length === 0 ? (
@@ -240,7 +246,7 @@ export default async function ClienteDetailPage({
                           {PROVIDER_LABELS[intg.provider] ?? intg.provider}
                         </p>
                         <p className="text-xs text-slate-400">
-                          Última sincronização: {fmtDate(intg.last_sync_at)}
+                          Última sincronização: {fmtDate(intg.last_success_at)}
                         </p>
                       </div>
                     </div>

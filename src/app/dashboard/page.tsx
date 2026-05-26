@@ -27,7 +27,7 @@ type MetricRow = {
   leads: number | null;
 };
 type IntegrationRow = { account_id: string; status: string };
-type AlertRow = { account_id: string };
+type AlertRow = { account_id: string; severity: string };
 
 // status de integração considerados "com problema" (enum integration_status)
 const PROBLEM_INTEGRATION = ["error", "expired", "revoked"];
@@ -111,7 +111,7 @@ export default async function DashboardPage() {
         .returns<IntegrationRow[]>(),
       supabase
         .from("alerts")
-        .select("account_id")
+        .select("account_id, severity")
         .is("resolved_at", null)
         .returns<AlertRow[]>(),
     ]);
@@ -142,8 +142,21 @@ export default async function DashboardPage() {
   }
 
   const alertsByAccount = new Map<string, number>();
+  const criticalByAccount = new Map<string, boolean>();
   for (const a of alertRows ?? []) {
     alertsByAccount.set(a.account_id, (alertsByAccount.get(a.account_id) ?? 0) + 1);
+    if (a.severity === "critical") criticalByAccount.set(a.account_id, true);
+  }
+
+  // Health: "ok" | "warning" | "critical" | "—"
+  function healthOf(accountId: string): { label: string; color: string } {
+    const hasActive = (integrationRows ?? []).some(
+      (i) => i.account_id === accountId && i.status === "active"
+    );
+    if (!hasActive) return { label: "—", color: "text-slate-400" };
+    if (criticalByAccount.get(accountId)) return { label: "Crítico", color: "text-red-600" };
+    if ((alertsByAccount.get(accountId) ?? 0) > 0) return { label: "Atenção", color: "text-amber-600" };
+    return { label: "OK", color: "text-emerald-600" };
   }
 
   let totalSpend = 0;
@@ -277,9 +290,12 @@ export default async function DashboardPage() {
                     </div>
 
                     <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-500">
-                      <span>Integracoes: {integrations}</span>
+                      <span>Integrações: {integrations}</span>
                       <span>Alertas: {alerts}</span>
-                      <span>Health: —</span>
+                      {(() => {
+                        const h = healthOf(client.id);
+                        return <span className={`font-medium ${h.color}`}>Health: {h.label}</span>;
+                      })()}
                     </div>
 
                     {semDados ? (
