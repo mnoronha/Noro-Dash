@@ -77,8 +77,10 @@ const SEVERITY_COLOR: Record<string, string> = {
 
 export default async function ClienteDetailPage({
   params,
+  searchParams,
 }: {
   params: { slug: string };
+  searchParams: { connected?: string; error?: string };
 }) {
   const supabase = createSupabaseServerClient();
 
@@ -139,8 +141,34 @@ export default async function ClienteDetailPage({
 
   const semDados = metrics.spend === 0 && metrics.revenue === 0;
 
+  const connectedProviders = new Set(integrations.map((i) => i.provider));
+
   return (
     <div className="space-y-6">
+      {/* Banners de feedback OAuth */}
+      {searchParams.connected === "meta" && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          Meta Ads conectado com sucesso! Os dados aparecerão aqui após a primeira sincronização.
+        </div>
+      )}
+      {searchParams.error === "meta_denied" && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Autorização cancelada. Tente novamente.
+        </div>
+      )}
+      {searchParams.error === "no_ad_accounts" && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          Nenhuma conta de anúncios encontrada neste perfil do Meta.
+        </div>
+      )}
+      {searchParams.error === "missing_meta_credentials" && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          Configure o App ID e App Secret do Meta em{" "}
+          <a href="/dashboard/configuracoes" className="underline font-medium">Configurações da agência</a>{" "}
+          antes de conectar.
+        </div>
+      )}
+
       {/* Website link */}
       {account.website_url && (
         <div className="flex items-center justify-between">
@@ -231,7 +259,22 @@ export default async function ClienteDetailPage({
               Disponíveis para conectar
             </p>
             <div className="flex flex-wrap gap-2">
-              {["Meta Ads", "Google Ads", "GA4"].map((p) => (
+              {connectedProviders.has("meta_ads") ? (
+                <a
+                  href={`/api/auth/meta/connect?account_id=${account.id}`}
+                  className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-500 hover:border-sea hover:text-sea transition"
+                >
+                  Reconectar Meta Ads
+                </a>
+              ) : (
+                <a
+                  href={`/api/auth/meta/connect?account_id=${account.id}`}
+                  className="rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs text-blue-600 hover:bg-blue-100 transition"
+                >
+                  + Meta Ads
+                </a>
+              )}
+              {["Google Ads", "GA4"].map((p) => (
                 <button
                   key={p}
                   disabled
@@ -242,7 +285,6 @@ export default async function ClienteDetailPage({
                 </button>
               ))}
             </div>
-            <p className="mt-2 text-xs text-slate-400">Conexão OAuth em breve.</p>
           </div>
         </section>
 
